@@ -57,3 +57,11 @@ async def new_page(context: BrowserContext, default_timeout: int = 30) -> Page:
         page.set_default_timeout(default_timeout*1000)
     logger.debug("Page created.")
     return page
+
+async def reset_page(old_page: Page, context: BrowserContext, default_timeout: int = 30) -> Page:
+    if not context: raise ValueError("Context is missing.")
+    try:
+        await old_page.close()
+    except Exception:
+        logger.warning("Couldn't dispose the old page.")
+    return await new_page(context, default_timeout)
