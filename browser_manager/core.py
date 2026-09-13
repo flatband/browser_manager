@@ -58,10 +58,26 @@ async def new_page(context: BrowserContext, default_timeout: int = 30) -> Page:
     logger.debug("Page created.")
     return page
 
-async def reset_page(old_page: Page, context: BrowserContext, default_timeout: int = 30) -> Page:
-    if not context: raise ValueError("Context is missing.")
-    try:
-        await old_page.close()
-    except Exception:
-        logger.warning("Couldn't dispose the old page.")
-    return await new_page(context, default_timeout)
+async def reset(target: Page | BrowserContext, default_timeout: int = 30) -> Page | BrowserContext:
+    """Close a page or context and return a fresh replacement.
+
+    Pass a Page to get a new Page in the same context.
+    Pass a BrowserContext to get a new BrowserContext in the same browser.
+    """
+    if isinstance(target, Page):
+        context = target.context
+        try:
+            await target.close()
+        except Exception:
+            logger.warning("Couldn't dispose the old page.")
+        return await new_page(context, default_timeout)
+
+    if isinstance(target, BrowserContext):
+        browser = target.browser
+        try:
+            await target.close()
+        except Exception:
+            logger.warning("Couldn't dispose the old context.")
+        return await new_context(browser)
+
+    raise TypeError(f"Expected a Page or BrowserContext, got {type(target).__name__}.")
